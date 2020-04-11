@@ -1,48 +1,92 @@
-import win32api, keyboard
-from pynput import mouse
+from pynput.mouse import Controller, Button
 import time
+import random
 
-
-class Recorder:
+class Clicker:
 
     def __init__(self):
         self.click_list = []
-        self.last_time_registered = time.time()
+        self.mouse = Controller()
 
 
-    def listen(self):
-        listener = mouse.Listener(
-           # on_move=self.mouse_move,
-            on_click=self.mouse_click,
-            #on_scroll=self.mouse_scroll
-        )
-        listener.start()
-
-        while keyboard.read_key() != 'f4':
-            pass
-
-
-    def mouse_move(self, x, y):
-        print("Andou para: ", x , y)
-
-
-    def mouse_click(self, x, y, button, pressed):
-        if pressed:
-            previous_time = self.last_time_registered
-            self.last_time_registered = time.time()
-            time_passed = (self.last_time_registered - previous_time)
-
-            print("click at: ", x, y)
-            self.click_list.append([x, y, time_passed])
-
-
-    def save_click_list(self):
+    def load_click_list(self, path="clicklist.json"):
         import json
-        with open("clicklist.json", "w") as file:
-            file.write(json.dumps(self.click_list))
+        with open(path, "r") as file:
+            clicklist = json.loads(file.read())
+            self.click_list = clicklist
+
+
+    def loop(self, times=1):
+        round = 0
+        while round < times:
+            print("Starting loop: ", round)
+            # clicks
+            for x, y, time_to_wait in self.click_list:
+
+                self.wait(time_to_wait)
+                posx, posy = self.prepare_position(x, y)
+                print("Position: ", posx, posy)
+                self.click()
+                # after click, sends mouse to another random position
+                self.confunde()
+
+
+            #Time after endloop
+            self.wait(7, 1)
+            round += 1
+
+    def wait(self, wait_time, max_extra_time=3):
+        # add some random extra time to the click so it looks less automatic
+        time.sleep(wait_time + random.uniform(0, max_extra_time))
+
+
+    def prepare_position(self, initial_x, initial_y, max_error_margin=30):
+
+        final_x = random.randrange(initial_x-max_error_margin, initial_x+max_error_margin)
+        final_y = random.randrange(initial_y-max_error_margin, initial_y+max_error_margin)
+
+        self.smooth_moviment(final_x, final_y)
+
+        # move the mouse
+        self.mouse.position = (final_x, final_y)
+
+        return final_x, final_y
+
+
+    def smooth_moviment(self, final_x, final_y):
+        #get current position of mouse
+        actual_x = self.mouse.position[0]
+        actual_y = self.mouse.position[1]
+
+        # calculates a route to move the mouse
+        path_x = list(range(actual_x, final_x, 1 if actual_x < final_x else -1))
+        path_y = list(range(actual_y, final_y, 1 if actual_y < final_y else -1))
+
+        # get the minimum route
+        min_route = max(len(path_x), len(path_y))
+
+        # makes path x and y have the same lengh
+        path_x = [path_x[0] for i in range(min_route-len(path_x))] + path_x
+        path_y = [path_y[0] for i in range(min_route-len(path_y))] + path_y
+
+        # moves the mouse smothly
+        for position in range(min_route):
+
+            self.mouse.position = (path_x[position], path_y[position])
+            time.sleep(1/min_route)
+
+
+    def confunde(self):
+        for i in range(1000):
+            self.mouse.move(random.randrange(-1, 2), random.randrange(-1, 2))
+
+
+    def click(self):
+        self.mouse.press(Button.left)
+        self.mouse.release(Button.left)
 
 
 if __name__ == '__main__':
-    recorder = Recorder()
-    recorder.listen()
-    recorder.save_click_list()
+    clicker = Clicker()
+    clicker.load_click_list()
+    clicker.loop(1000)
