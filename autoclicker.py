@@ -66,18 +66,18 @@ class Clicker:
         min_route = max(len(path_x), len(path_y))
 
         # makes path x and y have the same lengh
-        path_x = [path_x[0] for i in range(min_route-len(path_x))] + path_x
-        path_y = [path_y[0] for i in range(min_route-len(path_y))] + path_y
+        path_x = [actual_x for i in range(min_route-len(path_x))] + path_x
+        path_y = [actual_y for i in range(min_route-len(path_y))] + path_y
 
         # moves the mouse smothly
         for position in range(min_route):
 
             self.mouse.position = (path_x[position], path_y[position])
-            time.sleep(1/min_route)
+            self.confunde(8)
 
 
-    def confunde(self):
-        for i in range(1000):
+    def confunde(self, deep=1000):
+        for i in range(deep):
             self.mouse.move(random.randrange(-1, 2), random.randrange(-1, 2))
 
 
@@ -87,6 +87,21 @@ class Clicker:
 
 
 if __name__ == '__main__':
-    clicker = Clicker()
-    clicker.load_click_list()
-    clicker.loop(1000)
+    import sys
+    try:
+        number_loops, file_to_load = int(sys.argv[1]), sys.argv[2]
+        clicker = Clicker()
+        clicker.load_click_list(file_to_load)
+
+    except IndexError:
+        print("Command utilization: python autoclicker.py NUMBER_OF_LOOPS FILE_WITH_CLICKLIST_CONFIGURATION_RECORDERED")
+
+    except ValueError:
+        print("NUMBER_OF_LOOPS must be integer")
+
+    except FileNotFoundError as exc:
+        print("Unable to find FILE_WITH_CLICKLIST_CONFIGURATION_RECORDERED. ", exc)
+
+    else:
+        clicker.loop(number_loops)
+
