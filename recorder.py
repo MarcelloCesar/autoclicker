@@ -33,7 +33,14 @@ class Recorder:
             time_passed = (self.last_time_registered - previous_time)
 
             print("click at: ", x, y)
-            self.click_list.append([x, y, time_passed])
+            self.click_list.append(
+                {
+                    "type" : button == mouse.Button.left,
+                    "x": x,
+                    "y": y,
+                    "time_to_wait":time_passed
+                }
+            )
 
 
     def save_click_list(self):

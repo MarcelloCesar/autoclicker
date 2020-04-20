@@ -1,0 +1,6 @@
+{
+    "max_error_margin": 30,
+    "number_of_loops": 99,
+    "click_list_file": "clicklist.json",
+    "loop_delay": 7
+}

@@ -1,16 +1,18 @@
 from pynput.mouse import Controller, Button
 import time
 import random
+import json
 
 class Clicker:
 
-    def __init__(self):
+    def __init__(self, max_error_margin=30, loop_delay=7):
         self.click_list = []
         self.mouse = Controller()
+        self.max_error_margin = max_error_margin
+        self.loop_delay = loop_delay
 
 
     def load_click_list(self, path="clicklist.json"):
-        import json
         with open(path, "r") as file:
             clicklist = json.loads(file.read())
             self.click_list = clicklist
@@ -21,18 +23,18 @@ class Clicker:
         while round < times:
             print("Starting loop: ", round)
             # clicks
-            for x, y, time_to_wait in self.click_list:
+            for click in self.click_list:
 
-                self.wait(time_to_wait)
-                posx, posy = self.prepare_position(x, y)
+                self.wait(click["time_to_wait"])
+                posx, posy = self.prepare_position(click["x"], click["y"])
                 print("Position: ", posx, posy)
-                self.click()
+                self.click(click["type"])
                 # after click, sends mouse to another random position
                 self.confunde()
 
 
             #Time after endloop
-            self.wait(7, 1)
+            self.wait(self.loop_delay, 1)
             round += 1
 
     def wait(self, wait_time, max_extra_time=3):
@@ -40,10 +42,9 @@ class Clicker:
         time.sleep(wait_time + random.uniform(0, max_extra_time))
 
 
-    def prepare_position(self, initial_x, initial_y, max_error_margin=30):
-
-        final_x = random.randrange(initial_x-max_error_margin, initial_x+max_error_margin)
-        final_y = random.randrange(initial_y-max_error_margin, initial_y+max_error_margin)
+    def prepare_position(self, initial_x, initial_y):
+        final_x = random.randrange(initial_x-self.max_error_margin, initial_x+self.max_error_margin)
+        final_y = random.randrange(initial_y-self.max_error_margin, initial_y+self.max_error_margin)
 
         self.smooth_moviment(final_x, final_y)
 
@@ -81,27 +82,19 @@ class Clicker:
             self.mouse.move(random.randrange(-1, 2), random.randrange(-1, 2))
 
 
-    def click(self):
-        self.mouse.press(Button.left)
-        self.mouse.release(Button.left)
+    def click(self, left_click=True):
+        button = Button.left if left_click else Button.right
+        self.mouse.press(button)
+        self.mouse.release(button)
 
 
 if __name__ == '__main__':
-    import sys
-    try:
-        number_loops, file_to_load = int(sys.argv[1]), sys.argv[2]
-        clicker = Clicker()
-        clicker.load_click_list(file_to_load)
 
-    except IndexError:
-        print("Command utilization: python autoclicker.py NUMBER_OF_LOOPS FILE_WITH_CLICKLIST_CONFIGURATION_RECORDERED")
+    # loads config file
+    with open("config.json", "r") as file:
+        configuration = json.loads(file.read())
 
-    except ValueError:
-        print("NUMBER_OF_LOOPS must be integer")
-
-    except FileNotFoundError as exc:
-        print("Unable to find FILE_WITH_CLICKLIST_CONFIGURATION_RECORDERED. ", exc)
-
-    else:
-        clicker.loop(number_loops)
+    clicker = Clicker(configuration["max_error_margin"], configuration['loop_delay'])
+    clicker.load_click_list(configuration["click_list_file"])
+    clicker.loop(configuration["number_of_loops"])
 
