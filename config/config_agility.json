@@ -1,6 +1,6 @@
 {
-    "max_error_margin": 30,
-    "number_of_loops": 99,
+    "max_error_margin": 25,
+    "number_of_loops": 40,
     "click_list_file": "./clicklists/clicklist_agility.json",
     "loop_delay": 7
 }

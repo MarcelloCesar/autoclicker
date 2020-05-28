@@ -1,0 +1,6 @@
+{
+    "max_error_margin": 8,
+    "number_of_loops": 2707,
+    "click_list_file": "./clicklists/clicklist_alquimia.json",
+    "loop_delay": 1
+}
